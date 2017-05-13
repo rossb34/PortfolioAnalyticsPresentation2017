@@ -1,4 +1,5 @@
 library(PortfolioAnalytics)
+library(methods)
 
 source("data_prep.R")
 R <- edhec[,1:5]
