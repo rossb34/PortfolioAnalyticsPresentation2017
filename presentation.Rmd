@@ -9,7 +9,7 @@ widgets     : mathjax
 mode        : selfcontained
 ---
 
-```{r, echo=FALSE, message=FALSE}
+```{r, echo=FALSE, message=FALSE, comment=NA}
 library(PortfolioAnalytics)
 require(methods)
 ```
@@ -179,8 +179,9 @@ analyze the optimal portfolio which is the output of the solver.
 ---
 
 ## Workflow: Specify Portfolio
-```{r}
-args(portfolio.spec)
+```{r, eval = TRUE}
+p <- portfolio.spec(assets = c('AAPL', 'MSFT', 'GOOG'))
+print(p)
 ```
 
 Initializes the portfolio object that holds portfolio level data, constraints,
@@ -198,8 +199,16 @@ assets.
 ---
 
 ## Workflow: Add Constraints
-```{r}
-args(add.constraint)
+```{r, eval = FALSE}
+# weights sum to 1
+p <- add.constraint(portfolio = p, type = 'weight_sum',
+                    min_sum = 1, max_sum = 1)
+# special type for full investment constraint
+# add.constraint(portfolio = p, type = 'full_investment')
+# box constraints
+p <- add.constraint(portfolio = p, type = 'box',
+                    min = 0.2, max = 0.6)
+
 ```
 
 Supported Constraint Types
@@ -223,8 +232,8 @@ arguments to the constraint constructor are then passed through the dots (...).
 ---
 
 ## Workflow: Add Objectives
-```{r}
-args(add.objective)
+```{r, eval = FALSE}
+p <- add.objective(portfolio = p, type = 'risk', name = 'StdDev')
 ```
 
 Supported Objective types
@@ -246,9 +255,16 @@ but custom user defined functions can be used as objective functions.
 ---
 
 ## Workflow: Run Optimization
-```{r}
-args(optimize.portfolio)
-args(optimize.portfolio.rebalancing)
+```{r, eval = FALSE}
+opt <- optimize.portfolio(R, portfolio = p, optimize_method = 'random',
+                          search_size = 2000)
+
+opt.rebal <- optimize.portfolio.rebalancing(R, portfolio = p,
+                                            optimize_method = 'random',
+                                            search_size = 2000,
+                                            rebalance_on = 'quarters',
+                                            training_period = 60,
+                                            rolling_window = 60)
 ```
 
 <!--
