@@ -387,6 +387,115 @@ specify a vector of fev values for comprehensive coverage of the feasible space.
 
 ---
 
+## Hierarchical (i.e. Multilayer) Optimization
+
+![](mult_portf.png)
+
+see [PortfolioAnalytics Tutorial R/Finance 2016](https://github.com/rossb34/PortfolioAnalyticsPresentation2016)
+
+<!--
+explanation of how the multilayer optimization works
+start with portfolio of subportfolios
+the subportfolios could be countries, sectors, strategies, etc.
+optimize subportfolios
+this gives us 'n' synthetic return streams for 'n' sub portfolios
+we then optimize the top level portfolio using the 'n' synthetic return streams
+-->
+
+---
+
+## Regime Switching Model
+
+* Define a model to characterize `n` regimes
+* Define `n` portfolio specifications, 1 for each regime
+
+see [PortfolioAnalytics Tutorial R/Finance 2016](https://github.com/rossb34/PortfolioAnalyticsPresentation2016)
+
+<!--
+explanation of how the multilayer optimization works
+start with portfolio of subportfolios
+the subportfolios could be countries, sectors, strategies, etc.
+optimize subportfolios
+this gives us 'n' synthetic return streams for 'n' sub portfolios
+we then optimize the top level portfolio using the 'n' synthetic return streams
+-->
+
+---
+
+## Estimating Moments
+
+Ledoit and Wolf (2003):
+
+> "The central message of this paper is that nobody should be using the sample
+> covariance matrix for the purpose of portfolio optimization."
+
+
+* Sample
+* Shrinkage Estimators
+* Factor Model
+* Expressing Views
+  * [PortfolioAnalytics Tutorial R/Finance 2015](https://github.com/rossb34/PortfolioAnalyticsPresentation2015)
+* See [Custom Moment and Objective Functions](https://cran.r-project.org/web/packages/PortfolioAnalytics/vignettes/custom_moments_objectives.pdf) vignette
+
+<!--
+From Ledoit and Wolf (2003), "Honey, I Shrunk the Sample Covariance Matrix"
+The central message of this paper is that nobody should be using the sample 
+covariance matrix for the purpose of portfolio optimization.
+
+Estimating moments using shrinkage estimators, factor models, views are methods
+to address the disadvantages of using sample estimates. I am not making a claim
+that one method is better than another. The method chosen depends on one's own
+situation and information/data available.
+
+Increase risk of estimation error as dimension of assets and parameters to
+estimate increase
+
+Sample Estimates Disadvantages
+  * Estimation error and the curse of dimensionality
+  * In the Mean - Variance framework, small changes in expected returns can 
+  lead to extreme portfolios (large long/short positions) in the unconstrained
+  case and concentrated (large positions in few assets) portfolios wth long
+  only constraint.
+  * Note that adding constraints have of the effect of lessening the impact of 
+  estimation error. TODO: reference? I remember Doug stating this
+
+The estimation of a covariance matrix is unstable unless the number of
+historical observations T is greater than the number of assets N. 
+10 years of data
+daily: 2500
+weekly: 520
+monthly: 120
+
+One has the choice to estimate moments with historical or simulated data.
+
+Historical Data
+  * do you have enough data?
+  * missing assets
+  * is it clean?
+
+Simulated data
+  * Model risk
+  * How well does the model describe the data?
+
+* Shrinkage Estimators
+  * Ledoit-Wolf
+  * James-Stein
+* Factor Model
+  * Fundamental
+  * Statistical
+  * Boudt et al (2014) use factor model to estimate higher order comoments
+* Expressing Views
+  * Black - Litterman
+  * Almgren and Chriss, Portfolios from Sorts
+  * Meucci, Fully Flexible Views Framework
+* Other
+  * Resampling
+  * ?
+
+-->
+
+---
+
 ## Example: U.S. Equity Sector ETF Portfolio
 
 Consider a long only U.S. Equity portfolio allocation problem
