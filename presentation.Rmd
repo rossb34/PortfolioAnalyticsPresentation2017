@@ -63,13 +63,9 @@ objectives and constraints.
 ## Portfolio Optimization Objectives
 
 * Minimize Risk
-    * Volatility
-    * Tail Loss (VaR, ES)
-    * Other Downside Risk Measure
+    * Volatility, Tail Loss (VaR, ES), Max Drawdown, etc.
 * Maximize Risk Adjusted Return
-    * Sharpe Ratio
-    * Information Ratio
-    * Several Others
+    * Sharpe Ratio, Information Ratio, etc.
 * Risk Budgets
     * Equal Component Contribution to Risk (i.e. Risk Parity)
     * Limits on Component Contribution
@@ -214,8 +210,7 @@ p <- add.constraint(portfolio = p, type = 'box',
 Supported Constraint Types
 
 * Sum of Weights
-* Box
-* Group
+* Box, Group
 * Factor Exposure
 * Position Limit
 * and many more
@@ -509,7 +504,6 @@ Approach
 
 * Baseline portfolio 
 * Box constraints
-* Custom moment function
 * Custom objective function
 * Analysis
 
@@ -766,12 +760,17 @@ legend('topleft', legend = c('constrained', 'unconstrained'),
 
 ## Improvements
 
-* Risk Budgeting
+* Risk Measures
+  * Expected Shortfall
+  * Component contribution to risk (i.e. Risk Budgeting)
 * Better Estimates
   * Factor Model
   * GARCH
   * Return Forecasts
 * More Data
+  * Weekly or daily frequency
+    * downsampling to monthly frequency "throws away" a lot of data
+  * Estimates based on higher frequency data
 
 ---
 
