@@ -1,10 +1,12 @@
 library(PortfolioAnalytics)
+library(methods)
 library(foreach)
 library(iterators)
 require(doParallel, quietly=TRUE)
 registerDoParallel(cores=detectCores()-4)
 
 source('data_prep.R')
+source('simulate_portfolio.R')
 
 # setup for output
 create.fig.path <- function(x, fig.dir = 'figures/', type = 'png'){
