@@ -387,9 +387,271 @@ specify a vector of fev values for comprehensive coverage of the feasible space.
 
 ---
 
-## TODO
+## Example: U.S. Equity Sector ETF Portfolio
 
-placeholder for examples
+Consider a long only U.S. Equity portfolio allocation problem
+
+Data
+
+* Monthly returns of 9 U.S. Equity Sector ETFs from 1999 to May 2016
+* Source: Yahoo
+
+Approach
+
+* Baseline portfolio 
+* Box constraints
+* Custom moment function
+* Custom objective function
+* Analysis
+
+Goal is to outperform the S&P 500 (SPY as a proxy)
+
+<!--
+* start with a simple portfolio specification, then add more complexity
+-->
+
+---
+
+
+## Baseline Portfolio Specification
+
+Baseline portfolio specification to minimize portfolio standard deviation, 
+subject to full investment and long only constraints.
+
+```{r, eval = FALSE}
+# base portfolio specification
+p <- portfolio.spec(assets = colnames(R), 
+                    weight_seq = generatesequence(min = 0, max = 1, by = 0.002))
+p <- add.constraint(portfolio = p, type = 'weight_sum', 
+                    min_sum = 0.99, max_sum = 1.01)
+p <- add.constraint(portfolio = p, type = 'box', min = 0, max = 1)
+p <- add.objective(portfolio = p, type = 'return', name = 'mean', multiplier = 0)
+p <- add.objective(portfolio = p, type = 'risk', name = 'StdDev')
+```
+
+---
+
+## Box Constraints
+
+Add box constraints such that for each asset the minimum weight is 5% and the
+maximum weight is 20%.
+
+* copy the baseline portfolio specification
+* replace the second index of the constraint object
+
+```{r, eval = FALSE}
+# portfolio specification with box constraints
+p.box <- p
+p.box <- add.constraint(portfolio = p.box, type = 'box', 
+                        min = 0.05, max = 0.20, indexnum = 2)
+```
+
+---
+
+## Single Period Optimization
+
+Run a single period optimization for the portfolio specifications
+
+```{r, eval = FALSE}
+# generate the random portfolios
+rp <- random_portfolios(portfolio = p, permutations = rp.n, method = 'sample')
+rp <- normalize.weights(rp)
+rp.box <- random_portfolios(portfolio = p.box, permutations = rp.n, method = 'sample')
+rp.box <- normalize.weights(rp.box)
+
+# run the optimizations
+opt.base <- optimize.portfolio(R = tail(R, 36), portfolio = p, rp = rp,
+                               optimize_method = 'random', trace = TRUE)
+opt.box <- optimize.portfolio(R = tail(R, 36), portfolio = p.box, rp = rp.box,
+                              optimize_method = 'random', trace = TRUE)
+```
+
+---
+
+
+## Feasible Space Comparison
+
+Impact of box constraints on the feasible space of the in sample period.
+
+![](figures/feasible_base_box.png)
+
+---
+
+## Optimization with Periodic Rebalancing
+
+```{r, eval=FALSE}
+opt.base.rebal <- optimize.portfolio.rebalancing(R = R, portfolio = p,
+                                                 optimize_method = 'random',
+                                                 rp = rp, trace = TRUE,
+                                                 rebalance_on = 'quarters',
+                                                 training_period = 36,
+                                                 rolling_window = 36)
+opt.base.rebal.r <- Return.portfolio(R, weights = extractWeights(opt.base.rebal))
+colnames(opt.base.rebal.r) <- 'base'
+
+opt.box.rebal <- optimize.portfolio.rebalancing(R = R, portfolio = p.box,
+                                                optimize_method = 'random',
+                                                rp = rp.box, trace = TRUE,
+                                                rebalance_on = 'quarters',
+                                                training_period = 36,
+                                                rolling_window = 36)
+opt.box.rebal.r <- Return.portfolio(R, weights = extractWeights(opt.box.rebal))
+colnames(opt.box.rebal.r) <- 'box'
+```
+
+
+<!--
+* evaluate out of sample performance
+-->
+
+---
+
+## Baseline Optimal Weights
+
+```{r, eval=FALSE}
+chart.Weights(opt.base.rebal, main = 'Baseline Portfolio Optimal Weights')
+```
+
+![](figures/opt_base_rebal_weights.png)
+
+---
+
+## Box Constrained Optimal Weights
+
+```{r, eval=FALSE}
+chart.Weights(opt.box.rebal, main = 'Box Constrained Portfolio Optimal Weights')
+```
+
+![](figures/opt_box_rebal_weights.png)
+
+
+---
+
+## Baseline and Constrained Performance Summary
+
+```{r, eval=FALSE}
+opt.r <- cbind(opt.base.rebal.r, opt.box.rebal.r)
+charts.PerformanceSummary(opt.r, main = "Performance Summary")
+```
+
+![](figures/base_box_perf.png)
+
+---
+
+## Tracking Error Custom Objective Function
+
+Define a custom objective function for penalized tracking error
+
+```{r, eval=FALSE}
+te.target <- function(R, weights, Rb, min.te = 0.02, max.te = 0.05, scale = 12){
+    r <- Return.portfolio(R = R, weights = weights)
+    Rb <- Rb[index(r)]
+    te <- sd(r - Rb) * sqrt(scale)
+    # penalize tracking error outside of [min.te, max.te] range
+    out <- 0
+    if(te > max.te)
+        out <- (te - max.te) * 10000
+    if(te < min.te)
+        out <- (min.te - te) * 10000
+    out
+}
+```
+
+---
+
+## Tracking Error Target Optimization
+
+* Add tracking error  as an objective to the baseline portfolio specification
+* Specify the arguments to `te.target` as a named list
+* Target an Annualized Tracking Error in the range of 3% to 5%
+
+```{r, eval=FALSE}
+p.te <- p
+p.te <- add.objective(portfolio = p, type = 'risk', name = 'te.target',
+                      arguments = list(Rb = R.mkt, scale = 12,
+                                       min.te = 0.03, max.te = 0.05))
+
+opt.te.rebal <- optimize.portfolio.rebalancing(R = R, portfolio = p.te,
+                                                optimize_method = 'random',
+                                                rp = rp, trace = TRUE,
+                                                rebalance_on = rebal.period,
+                                                training_period = n.train,
+                                                rolling_window = n.roll) 
+opt.te.rebal.r <- Return.portfolio(R, weights = extractWeights(opt.te.rebal))
+colnames(opt.te.rebal.r) <- 'te.target'
+```
+
+---
+
+## Tracking Error Target Performance Summary
+
+```{r, eval=FALSE}
+opt.r <- na.omit(cbind(opt.base.rebal.r, opt.box.rebal.r, opt.te.rebal.r, R.mkt))
+charts.PerformanceSummary(opt.r, main = "Performance Summary")
+```
+
+![](figures/base_box_te_perf.png)
+
+---
+
+## Portfolio Simulation and Analysis
+
+* Random portfolios to simulate portfolios of zero skill managers
+* Feasible portfolios by construction
+* Monte Carlo requires a model specification
+* Feasible portfolio with bootstrap or Monte Carlo Simulation?
+
+<!--
+simulate the returns of feasible portfolios based on the specified constraints
+and rebalancing frequency
+-->
+
+---
+
+## Simulate Portfolio Returns
+
+Simulate portfolio returns using the random portfolios generated from the
+baseline portfolio specification and box constraint portfolio specification.
+
+```{r, eval=FALSE}
+sim.base <- simulate.portfolio(R, rp, simulations = 1000, 
+                               rebalance_on = 'quarters')
+sim.box <- simulate.portfolio(R, rp.box, simulations = 1000, 
+                              rebalance_on = 'quarters')
+sim <- cbind(sim.box, sim.base)
+charts.PerformanceSummary(sim, colorset = c(rep("salmon", ncol(sim.box)), 
+                                            rep('gray', ncol(sim.base))), 
+                          legend.loc = NULL, main = "Simulated Performance Summary")
+legend('topleft', legend = c('constrained', 'unconstrained'), 
+       fill = c('salmon', 'gray'), bty = 'n')
+```
+
+---
+
+## Simulated Portfolio Performance Summary
+
+![](figures/sim_perf.png)
+
+---
+
+## Simulated vs. Optimal Portfolios: Risk Return Scatter
+
+![](figures/sim_scatter.png)
+
+---
+
+## Simulated vs. Optimal Portfolios: Distribution
+
+
+
+## Improvements
+
+* Risk Budgeting
+* Better Estimates
+  * Factor Model
+  * GARCH
+  * Return Forecasts
+* More Data
 
 ---
 
