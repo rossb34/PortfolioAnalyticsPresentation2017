@@ -599,7 +599,8 @@ charts.PerformanceSummary(opt.r, main = "Performance Summary")
 * Random portfolios to simulate portfolios of zero skill managers
 * Feasible portfolios by construction
 * Monte Carlo requires a model specification
-* Feasible portfolio with bootstrap or Monte Carlo Simulation?
+* Time series dependency with bootstrap
+* No guarantee of a feasible portfolio with bootstrap or Monte Carlo Simulation
 
 <!--
 simulate the returns of feasible portfolios based on the specified constraints
@@ -634,15 +635,25 @@ legend('topleft', legend = c('constrained', 'unconstrained'),
 
 ---
 
-## Simulated vs. Optimal Portfolios: Risk Return Scatter
 
-![](figures/sim_scatter.png)
+## Simulated vs. Optimal Portfolios: Sharpe Ratio Distribution
+
+![](figures/sim_base_sr.png)
 
 ---
 
-## Simulated vs. Optimal Portfolios: Distribution
+## Simulated vs. Optimal Portfolios: Sharpe Ratio Distribution
+
+![](figures/sim_box_sr.png)
+
+---
+
+## Simulated vs. Optimal Portfolios: Tracking Error Distribution
+
+![](figures/sim_base_te.png)
 
 
+---
 
 ## Improvements
 

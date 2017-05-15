@@ -115,8 +115,12 @@ opt.base.rebal <- optimize.portfolio.rebalancing(R = R, portfolio = p,
                                                  rebalance_on = rebal.period,
                                                  training_period = n.train,
                                                  rolling_window = n.roll)
+saveRDS(opt.base.rebal, file = 'out/opt_base_rebal.rds')
 opt.base.rebal.r <- Return.portfolio(R, weights = extractWeights(opt.base.rebal))
 colnames(opt.base.rebal.r) <- 'base'
+
+w <- extractWeights(opt.base.rebal)
+all(abs(1 - rowSums(w)) <= 1e-8)
 
 png(create.fig.path('opt_base_rebal_weights'), width = w.px, height = h.px, units = 'px')
 chart.Weights(opt.base.rebal, main = 'Baseline Portfolio Optimal Weights')
@@ -128,8 +132,12 @@ opt.box.rebal <- optimize.portfolio.rebalancing(R = R, portfolio = p.box,
                                                 rebalance_on = rebal.period,
                                                 training_period = n.train,
                                                 rolling_window = n.roll)
+saveRDS(opt.box.rebal, file = 'out/opt_box_rebal.rds')
 opt.box.rebal.r <- Return.portfolio(R, weights = extractWeights(opt.box.rebal))
 colnames(opt.box.rebal.r) <- 'box'
+
+w <- extractWeights(opt.box.rebal)
+all(abs(1 - rowSums(w)) <= 1e-8)
 
 png(create.fig.path('opt_box_rebal_weights'), width = w.px, height = h.px, units = 'px')
 chart.Weights(opt.box.rebal, main = 'Box Constrained Portfolio Optimal Weights')
@@ -179,9 +187,13 @@ opt.te.rebal <- optimize.portfolio.rebalancing(R = R, portfolio = p.te,
                                                rp = rp, trace = TRUE,
                                                rebalance_on = rebal.period,
                                                training_period = n.train,
-                                               rolling_window = n.roll) 
+                                               rolling_window = n.roll)
+saveRDS(opt.te.rebal, file = 'out/opt_te_rebal.rds')
 opt.te.rebal.r <- Return.portfolio(R, weights = extractWeights(opt.te.rebal))
 colnames(opt.te.rebal.r) <- 'te.target'
+
+w <- extractWeights(opt.te.rebal)
+all(abs(1 - rowSums(w)) <= 1e-8)
 
 png(create.fig.path('opt_te_rebal_weights'), width = w.px, height = h.px, units = 'px')
 chart.Weights(opt.te.rebal, main = 'Tracking Error Target Portfolio Optimal Weights')
@@ -237,42 +249,15 @@ colnames(ew.r) <- 'equal.weight'
 # colnames(roll_te) <- paste(colnames(opt.r)[1], " to ", colnames(opt.r)[2], sep = "")
 # plot(roll_te, main = "12 Month Rolling Tracking Error", grid.ticks.on = "years", major.ticks = "years", legend.loc = "topright")
 
-# portfolio simulation and analysis
-simulate.portfolio <- function(R, rp, simulations = 10, rebalance_on = "quarters", ...){
-  rebal.idx <- index(R[endpoints(R, on = rebalance_on, k = 1)])
-  # list of weights randomly sampled with replacement from a set of random portfolios
-  out <- vector("list", simulations)
-  for(i in 1:simulations){
-    # sample with replacement
-    out[[i]] <- xts(rp[sample.int(n = nrow(rp), size = length(rebal.idx), replace = TRUE),], rebal.idx)
-  }
-  R.out <- lapply(out, function(x) Return.portfolio(R, weights = x))
-  R.out <- do.call(cbind, R.out)
-  R.out
-}
+#sim.base <- simulate.portfolio(R, rp, simulations = 1000, rebalance_on = rebal.period)
+sim.base <- simulate.portfolio2(R['2002-03-31/'], rp, simulations = 5000, rebalance_on = rebal.period)
 
-# portfolio simulations
-simulate.portfolio2 <- function(R, rp, simulations = 10, rebalance_on = "quarters", ...){
-  rebal.idx <- index(R[endpoints(R, on = rebalance_on, k = 1)])
-  out <- foreach(i = 1:simulations, .combine = cbind) %dopar% {
-      # randomly sample random portfolios and build a time series of weights at
-      # the specified rebalance frequency
-      w <- xts(rp[sample.int(n = nrow(rp), size = length(rebal.idx), replace = TRUE),], rebal.idx)
-      r <- Return.portfolio(R, weights = w)
-      r
-  }
-  out
-}
-
-sim.base <- simulate.portfolio(R, rp, simulations = 1000, rebalance_on = rebal.period)
-#sim.base2 <- simulate.portfolio2(R, rp, simulations = 100, rebalance_on = rebal.period)
-
-sim.box <- simulate.portfolio(R, rp.box, simulations = 1000, rebalance_on = rebal.period)
-#sim.box <- simulate.portfolio(R, rp.box, simulations = 100, rebalance_on = rebal.period)
+# sim.box <- simulate.portfolio(R, rp.box, simulations = 1000, rebalance_on = rebal.period)
+sim.box <- simulate.portfolio2(R['2002-03-31/'], rp.box, simulations = 5000, rebalance_on = rebal.period)
 
 # subset to the same index as the optimization rebalancing returns
-sim.base <- sim.base[index(opt.r)]
-sim.box <- sim.box[index(opt.r)]
+# sim.base <- sim.base[index(opt.r)]
+# sim.box <- sim.box[index(opt.r)]
 
 sim <- cbind(sim.box, sim.base)
 png(create.fig.path('sim_perf'), width = w.px, height = h.px, units = 'px')
@@ -283,74 +268,76 @@ legend('topleft', legend = c('constrained', 'unconstrained'),
        fill = c('salmon', 'gray'), bty = 'n')
 dev.off()
 
-foo <- cbind(opt.r, sim)
-charts.PerformanceSummary(foo, colorset = c(1:4, rep('salmon', ncol(sim.box)), 
-                                            rep('gray', ncol(sim.base))), 
-                          legend.loc = NULL, main = "Simulated Performance Summary")
-legend('topleft', legend = c('constrained', 'unconstrained'), 
-       fill = c('salmon', 'gray'), bty = 'n')
 
-# charts.PerformanceSummary(sim.base, colorset = rep("gray", ncol(sim.base)),
-#                          legend.loc = NULL,
-#                          main = "Simulated Performance Summary: Base Portfolio Specification")
-# charts.PerformanceSummary(sim.box, colorset = rep("gray", ncol(sim.box)), 
-#                           legend.loc = NULL, 
-#                           main = "Simulated Performance Summary: Box Constrained")
+# performance statistics of the simulated portfolios
+sim.base.sr <- sharpe.ratio.component(x = sim.base, scale = 12)
+sim.base.ir <- information.ratio.component(x = sim.base, Rb = R.mkt, scale = 12)
 
-base.stats <- table.AnnualizedReturns(sim.base)
-box.stats <- table.AnnualizedReturns(sim.box)
-opt.r.stats <- table.AnnualizedReturns(opt.r[,1:3])
+sim.box.sr <- sharpe.ratio.component(x = sim.box, scale = 12)
+sim.box.ir <- information.ratio.component(x = sim.box, Rb = R.mkt, scale = 12)
 
-#chart.RiskReturnScatter(sim.base)
-png(create.fig.path('sim_scatter'), width = w.px, height = h.px, units = 'px')
-plot(x = as.numeric(base.stats[2,]), y = as.numeric(base.stats[1,]), col = 'gray',
-     xlim = c(0,0.2), ylim = c(0,0.12))
-points(x = as.numeric(box.stats[2,]), y = as.numeric(box.stats[1,]), col = 'salmon')
-points(x = as.numeric(opt.r.stats[2,]), y = as.numeric(opt.r.stats[1,]),
-       col = c('black', 'blue', 'red'), pch = 15:17)
-legend('topleft', legend = colnames(opt.r.stats), col = c('black', 'blue', 'red'),
-       pch = 15:17, bty = 'n')
+opt.r.stats <- table.AnnualizedReturns(opt.r)
+opt.r.ir <- table.InformationRatio(opt.r[,1:3], Rb = opt.r[,'SPY'])
+
+# Simulation: Sharpe Ratio
+png(create.fig.path('sim_base_sr'), width = w.px, height = h.px, units = 'px')
+chart.Histogram(sim.base.sr$sr, methods = c("add.density", "add.normal"),
+                xlab = 'Annualized Sharpe Ratio',
+                main = "Distribution of Annualized Sharpe Ratio: \nBase Portfolio Specification")
+abline(v = opt.r.stats[3,c('base', 'te.target')], lty = 1:2)
+text(x = opt.r.stats[3,c('base', 'te.target')], y = c(4, 3), 
+     labels = colnames(opt.r.stats[,c('base', 'te.target')]), pos = 4)
 dev.off()
 
-# chart.Histogram(as.numeric(base.stats[1,]), methods = c("add.density", "add.normal"),
-#                 main = "Distribution of Annualized Return: Base Portfolio Specification")
-# chart.Histogram(as.numeric(base.stats[2,]), methods = c("add.density", "add.normal"),
-#                 main = "Distribution of Annualized Standard Deviation: Base Portfolio Specification")
-
-# Sharpe Ratio of simulated vs optimal
-chart.Histogram(as.numeric(base.stats[3,]), methods = c("add.density", "add.normal"),
+png(create.fig.path('sim_box_sr'), width = w.px, height = h.px, units = 'px')
+chart.Histogram(sim.box.sr$sr, methods = c("add.density", "add.normal"),
                 xlab = 'Annualized Sharpe Ratio',
-                main = "Distribution of Annualized Sharpe Ratio: Base Portfolio Specification")
-abline(v = opt.r.stats[3,], lty = 1:3)
-text(x = opt.r.stats[3,], y = c(4, 3, 2), labels = colnames(opt.r.stats), pos = 4)
-
-chart.Histogram(as.numeric(box.stats[3,]), methods = c("add.density", "add.normal"),
-                xlab = 'Annualized Sharpe Ratio',
-                main = "Distribution of Annualized Sharpe Ratio: Base Portfolio Specification")
-abline(v = opt.r.stats[3,], lty = 1:3)
-text(x = opt.r.stats[3,], y = c(4, 3, 2), labels = colnames(opt.r.stats), pos = 4)
+                main = "Distribution of Annualized Sharpe Ratio: \nBox Constrained Portfolio Specification")
+abline(v = opt.r.stats[3,'box'], lty = 1)
+text(x = opt.r.stats[3,'box'], y = 10, 
+     labels = 'box', pos = 4)
+dev.off()
 
 
-# Information Ratio of simulated vs optimal
+# Simulation: Information Ratio
+png(create.fig.path('sim_base_ir'), width = w.px, height = h.px, units = 'px')
+chart.Histogram(sim.base.ir$ir, methods = c("add.density", "add.normal"),
+                xlab = 'Information Ratio',
+                main = "Distribution of Information Ratio: \nBase Portfolio Specification")
+abline(v = opt.r.ir[3,c('base', 'te.target')], lty = 1:2)
+text(x = opt.r.ir[3,c('base', 'te.target')], y = c(2, 1.5), 
+     labels = colnames(opt.r.ir[,c('base', 'te.target')]), pos = 4)
+dev.off()
 
-z <- na.omit(cbind(sim.base, R.mkt))
-sim.base.te <- TrackingError(Ra = z[,(1:ncol(z)-1)], Rb = z[,'SPY'])
-chart.Histogram(as.numeric(sim.base.te), methods = c("add.density", "add.normal"),
-                xlab = 'Tracking Error',
-                main = 'Distribution of Annualized Tracking Error: \nBase Portfolio Specification')
-abline(v = as.numeric(TrackingError(Ra = opt.r[,1:3], Rb = opt.r[,'SPY'])), lty = 1:3)
-text(x = as.numeric(TrackingError(Ra = opt.r[,1:3], Rb = opt.r[,'SPY'])), 
-     y = c(4, 3, 2), labels = colnames(opt.r.stats), pos = 4)
+png(create.fig.path('sim_box_ir'), width = w.px, height = h.px, units = 'px')
+chart.Histogram(sim.box.ir$ir, methods = c("add.density", "add.normal"),
+                xlab = 'Information Ratio',
+                main = "Distribution of Information Ratio: \nBox Constrained Portfolio Specification")
+abline(v = opt.r.ir[3,'box'], lty = 1)
+text(x = opt.r.ir[3,'box'], y = 2, 
+     labels = 'box', pos = 4)
+dev.off()
 
 
-z <- na.omit(cbind(sim.box, R.mkt))
-sim.te <- TrackingError(Ra = z[,(1:ncol(z)-1)], Rb = z[,'SPY'])
-chart.Histogram(as.numeric(sim.te), methods = c("add.density", "add.normal"),
-                xlab = 'Tracking Error',
-                main = 'Distribution of Annualized Tracking Error:\n Box Constrained Portfolio Specification')
-abline(v = as.numeric(TrackingError(Ra = opt.r[,1:3], Rb = opt.r[,'SPY'])), lty = 1:3)
-text(x = as.numeric(TrackingError(Ra = opt.r[,1:3], Rb = opt.r[,'SPY'])), 
-     y = c(4, 3, 2), labels = colnames(opt.r.stats), pos = 4)
+# Simulation: Tracking Error
+png(create.fig.path('sim_base_te'), width = w.px, height = h.px, units = 'px')
+chart.Histogram(sim.base.ir$te, methods = c("add.density", "add.normal"),
+                xlab = 'Annualised Tracking Error',
+                main = "Distribution of Annualised Tracking Error: \nBase Portfolio Specification")
+abline(v = opt.r.ir[2,c('base', 'te.target')], lty = 1:2)
+text(x = opt.r.ir[2,c('base', 'te.target')], y = c(60, 60), 
+     labels = colnames(opt.r.ir[,c('base', 'te.target')]), pos = 4)
+dev.off()
+
+png(create.fig.path('sim_box_te'), width = w.px, height = h.px, units = 'px')
+chart.Histogram(sim.box.ir$te, methods = c("add.density", "add.normal"),
+                xlab = 'Annualised Tracking Error',
+                main = "Distribution of Annualised Tracking Error: \nBox Constrained Portfolio Specification")
+abline(v = opt.r.ir[2,'box'], lty = 1)
+text(x = opt.r.ir[2,'box'], y = 2, 
+     labels = 'box', pos = 4)
+dev.off()
+
 
 #extractCovariance(statistical.factor.model(R = R, k = 4))
 #cov(R)
