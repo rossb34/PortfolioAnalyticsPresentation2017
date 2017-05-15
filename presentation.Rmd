@@ -612,12 +612,12 @@ and rebalancing frequency
 ## Simulate Portfolio Returns
 
 Simulate portfolio returns using the random portfolios generated from the
-baseline portfolio specification and box constraint portfolio specification.
+baseline portfolio specification and box constrained portfolio specification.
 
 ```{r, eval=FALSE}
-sim.base <- simulate.portfolio(R, rp, simulations = 1000, 
+sim.base <- simulate.portfolio(R, rp = rp, simulations = 5000, 
                                rebalance_on = 'quarters')
-sim.box <- simulate.portfolio(R, rp.box, simulations = 1000, 
+sim.box <- simulate.portfolio(R, rp = rp.box, simulations = 5000, 
                               rebalance_on = 'quarters')
 sim <- cbind(sim.box, sim.base)
 charts.PerformanceSummary(sim, colorset = c(rep("salmon", ncol(sim.box)), 
