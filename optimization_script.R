@@ -283,6 +283,13 @@ legend('topleft', legend = c('constrained', 'unconstrained'),
        fill = c('salmon', 'gray'), bty = 'n')
 dev.off()
 
+foo <- cbind(opt.r, sim)
+charts.PerformanceSummary(foo, colorset = c(1:4, rep('salmon', ncol(sim.box)), 
+                                            rep('gray', ncol(sim.base))), 
+                          legend.loc = NULL, main = "Simulated Performance Summary")
+legend('topleft', legend = c('constrained', 'unconstrained'), 
+       fill = c('salmon', 'gray'), bty = 'n')
+
 # charts.PerformanceSummary(sim.base, colorset = rep("gray", ncol(sim.base)),
 #                          legend.loc = NULL,
 #                          main = "Simulated Performance Summary: Base Portfolio Specification")
@@ -344,8 +351,6 @@ chart.Histogram(as.numeric(sim.te), methods = c("add.density", "add.normal"),
 abline(v = as.numeric(TrackingError(Ra = opt.r[,1:3], Rb = opt.r[,'SPY'])), lty = 1:3)
 text(x = as.numeric(TrackingError(Ra = opt.r[,1:3], Rb = opt.r[,'SPY'])), 
      y = c(4, 3, 2), labels = colnames(opt.r.stats), pos = 4)
-
-as.numeric(TrackingError(Ra = opt.r[,1:3], Rb = opt.r[,'SPY']))
 
 #extractCovariance(statistical.factor.model(R = R, k = 4))
 #cov(R)
