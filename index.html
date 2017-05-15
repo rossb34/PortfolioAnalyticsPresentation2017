@@ -1,0 +1,1467 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>PortfolioAnalytics Tutorial</title>
+  <meta charset="utf-8">
+  <meta name="description" content="PortfolioAnalytics Tutorial">
+  <meta name="author" content="Ross Bennett">
+  <meta name="generator" content="slidify" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta http-equiv="X-UA-Compatible" content="chrome=1">
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/default.css" media="all" >
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/phone.css" 
+    media="only screen and (max-device-width: 480px)" >
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/slidify.css" >
+  <link rel="stylesheet" href="libraries/highlighters/highlight.js/css/tomorrow.css" />
+  <base target="_blank"> <!-- This amazingness opens all links in a new tab. -->  <link rel=stylesheet href="libraries/widgets/nvd3/css/nv.d3.css"></link>
+<link rel=stylesheet href="libraries/widgets/nvd3/css/rNVD3.css"></link>
+
+  
+  <!-- Grab CDN jQuery, fall back to local if offline -->
+  <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.7.min.js"></script>
+  <script>window.jQuery || document.write('<script src="libraries/widgets/quiz/js/jquery.js"><\/script>')</script> 
+  <script data-main="libraries/frameworks/io2012/js/slides" 
+    src="libraries/frameworks/io2012/js/require-1.0.8.min.js">
+  </script>
+  
+  <script src="libraries/widgets/nvd3/js/jquery-1.8.2.min.js"></script>
+<script src="libraries/widgets/nvd3/js/d3.v3.min.js"></script>
+<script src="libraries/widgets/nvd3/js/nv.d3.min-new.js"></script>
+<script src="libraries/widgets/nvd3/js/fisheye.js"></script>
+
+
+</head>
+<body style="opacity: 0">
+  <slides class="layout-widescreen">
+    
+    <!-- LOGO SLIDE -->
+        <slide class="title-slide segue nobackground">
+  <hgroup class="auto-fadein">
+    <h1>PortfolioAnalytics Tutorial</h1>
+    <h2>R/Finance 2017</h2>
+    <p>Ross Bennett<br/></p>
+  </hgroup>
+  <article></article>  
+</slide>
+    
+
+    <!-- SLIDES -->
+    <slide class="" id="slide-1" style="background:;">
+  <hgroup>
+    <h2>Overview</h2>
+  </hgroup>
+  <article data-timings="">
+    <ul>
+<li>Discuss Portfolio Optimization</li>
+<li>Introduce PortfolioAnalytics</li>
+<li>Demonstrate PortfolioAnalytics with Examples</li>
+</ul>
+
+<!--
+* Discuss Portfolio Optimization
+    * Background and challenges of portfolio theory
+* Introduce PortfolioAnalytics
+    * What PortfolioAnalytics does and the problems it solves
+* Demonstrate PortfolioAnalytics with Examples
+    * Brief overview of the examples I will be giving
+    * use random portfolios to explore the feasible space of constrained portfolios
+    * demonstrate framework to solve hierarchical portfolio optimization problem
+-->
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-2" style="background:;">
+  <hgroup>
+    <h2>Modern Portfolio Theory</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>&quot;Modern&quot; Portfolio Theory (MPT) was introduced by Harry Markowitz in 1952.</p>
+
+<p>In general, MPT states that an investor&#39;s objective is to maximize portfolio
+expected return for a given amount of risk.</p>
+
+<p>Common Objectives</p>
+
+<ul>
+<li>Maximize a measure of gain per unit measure of risk</li>
+<li>Minimize a measure of risk</li>
+</ul>
+
+<p>How do we define risk? What about more complex objectives and constraints?</p>
+
+<!--
+Although Modern Portfolio Theory was introduced over 60 years ago, it
+establishes a framework for defining and evaluating objectives. In the Modern
+Portfolio Theory framework, the optimal portfolio for an investor to hold is the
+portfolio that maximizes portfolio expected return for a given level of risk.
+The academic approach follows the Markowitz approach using mean return as a
+measure of gain and standard deviation of returns as a measure of risk. However,
+most real world problems consider different measures of risk as well as multiple
+objectives and constraints.
+-->
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-3" style="background:;">
+  <hgroup>
+    <h2>Portfolio Optimization Objectives</h2>
+  </hgroup>
+  <article data-timings="">
+    <ul>
+<li>Minimize Risk
+
+<ul>
+<li>Volatility, Tail Loss (VaR, ES), Max Drawdown, etc.</li>
+</ul></li>
+<li>Maximize Risk Adjusted Return
+
+<ul>
+<li>Sharpe Ratio, Information Ratio, etc.</li>
+</ul></li>
+<li>Risk Budgets
+
+<ul>
+<li>Equal Component Contribution to Risk (i.e. Risk Parity)</li>
+<li>Limits on Component Contribution</li>
+</ul></li>
+<li>Maximize a Utility Function
+
+<ul>
+<li>Quadratic, Constant Relative Risk Aversion (CRRA), etc.</li>
+</ul></li>
+<li>Minimize Tracking Error
+
+<ul>
+<li>replicating portfolio to track an index or basket of assets</li>
+</ul></li>
+</ul>
+
+<!--
+Here are some common objectives
+
+* Minimize risk for different definitions of risk
+* Maximize risk adjusted return
+  * sharpe ratio, information ratio
+* Form a portfolio based on the risk contribution of each asset
+* Maximize a utility function
+* track an index, fund, or set of funds with minimal tracking error
+* How do we formulate and solve a portfolio optimization based on these
+  objectives?
+-->
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-4" style="background:;">
+  <hgroup>
+    <h2>Challenges of Portfolio Optimization in R</h2>
+  </hgroup>
+  <article data-timings="">
+    <ul>
+<li>Many solvers are not specific to portfolio optimization</li>
+<li>Understanding the capabilities and limits of solvers to select the appropriate
+solver for the problem or formulate the problem to fit the solver.</li>
+<li>Lack of a common interface to a wide range of solvers in R, difficult to
+switch between solvers.</li>
+<li>Closed-Form vs. Global Solvers</li>
+</ul>
+
+<!--
+Portfolio optimization is a hard problem. One challenge is knowing what solver
+to use and the capabilities and limits of the chosen solver. A solver is an
+algorithm designed to find the optimal solution to a given problem. You can
+chose a solver based on the objective or formulate the objective to fit the
+chosen solver. Ideally, you want the flexibility of effortlessly switching
+between solvers depending on the problem. In many cases, there is more than one
+solver that can solve the problem and you should evaluate both. An example of a
+closed-form solver is a quadratic programming solver. The main advantage of
+closed-form solvers is that they solve a given problem very fast and efficiently
+and return an exact solution. The main drawback is that the problem must be
+formulated in a very specific way that is typically unique to the solver. An
+example of a global solver is differential evolution optimization. Global
+solvers have the advantage of being able to solve more general types of problems
+and find the approximate solution of the global minimum or maximum of the
+objective function with local minima or maxima. However, the algorithms used in
+global solvers are relatively more complex and more compute intensive. In this
+tutorial, you will use both closed form and global solvers and learn how
+PortfolioAnalytics overcomes these challenges of portfolio optimization.
+-->
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-5" style="background:;">
+  <hgroup>
+    <h2>PortfolioAnalytics Overview</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>PortfolioAnalytics is an R package designed to provide numerical solutions and
+visualizations for portfolio optimization problems with complex constraints and
+objectives.</p>
+
+<p>Supports:</p>
+
+<ul>
+<li>multiple constraint and objective types</li>
+<li>modular constraints and objectives</li>
+<li>an objective function can be any valid R function</li>
+<li>user defined moment functions (e.g. covariance matrix, return projections)</li>
+<li>visualizations</li>
+<li>solver agnostic</li>
+<li>parallel computing</li>
+</ul>
+
+<!---
+PortfolioAnalytics was designed specifically to address the problems discussed
+in the previous video and exercises. Key components of the architecture of
+PortfolioAnalytics are modularity and flexibility. The multiple types and
+modularity of constraints and objectives allow you to add, remove, and combine
+multiple constraint and objective types very easily. An objective function can
+be defined as any valid R function. This means that you are not limited to a
+specific type or set of problems. Like objective functions, you can define
+custom moment functions as any valid R function. Visualization helps to build
+intuition about the problem and understand the feasible space of portfolios.
+Another key benefit is that PortfolioAnalytics supports several solvers and
+allows you to specify different solvers with minimal or no changes to the
+portfolio specification.
+-->
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-6" style="background:;">
+  <hgroup>
+    <h2>PortfolioAnalytics Framework</h2>
+  </hgroup>
+  <article data-timings="">
+    <p><img src="opt_fig.png" alt=""></p>
+
+<!--
+High level portfolio optimization framework
+
+This diagram is a high level representation of a portfolio optimization
+framework. The inputs are the assets, constraints, objectives, and moments of
+asset returns. The assets, constraints, and objectives are defined by the
+portfolio manager. The workflow in PortfolioAnalytics follows this diagram.
+First, you specify a portfolio of assets, then add constraints and objectives to
+the portfolio specification. Next, you run the optimization given the portfolio
+specification and estimates of asset return moments. The final step is to
+analyze the optimal portfolio which is the output of the solver.
+-->
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-7" style="background:;">
+  <hgroup>
+    <h2>Workflow: Specify Portfolio</h2>
+  </hgroup>
+  <article data-timings="">
+    <pre><code class="r">p &lt;- portfolio.spec(assets = c(&#39;AAPL&#39;, &#39;MSFT&#39;, &#39;GOOG&#39;))
+print(p)
+</code></pre>
+
+<pre><code>## **************************************************
+## PortfolioAnalytics Portfolio Specification 
+## **************************************************
+## 
+## Call:
+## portfolio.spec(assets = c(&quot;AAPL&quot;, &quot;MSFT&quot;, &quot;GOOG&quot;))
+## 
+## Number of assets: 3 
+## Asset Names
+## [1] &quot;AAPL&quot; &quot;MSFT&quot; &quot;GOOG&quot;
+</code></pre>
+
+<p>Initializes the portfolio object that holds portfolio level data, constraints,
+and objectives</p>
+
+<!--
+The portfolio object is an S3 object that holds portfolio-level data,
+constraints, and objectives. The portfolio-level data includes asset names and
+initial weights, labels to categorize assets, and a sequence of weights for
+random portfolios. The main argument is assets which can be a character vector
+(most common use), named numeric vector, or scalar value specifying number of
+assets.
+-->
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-8" style="background:;">
+  <hgroup>
+    <h2>Workflow: Add Constraints</h2>
+  </hgroup>
+  <article data-timings="">
+    <pre><code class="r"># weights sum to 1
+p &lt;- add.constraint(portfolio = p, type = &#39;weight_sum&#39;,
+                    min_sum = 1, max_sum = 1)
+# special type for full investment constraint
+# add.constraint(portfolio = p, type = &#39;full_investment&#39;)
+# box constraints
+p &lt;- add.constraint(portfolio = p, type = &#39;box&#39;,
+                    min = 0.2, max = 0.6)
+</code></pre>
+
+<p>Supported Constraint Types</p>
+
+<ul>
+<li>Sum of Weights</li>
+<li>Box, Group</li>
+<li>Factor Exposure</li>
+<li>Position Limit</li>
+<li>and many more</li>
+</ul>
+
+<!--
+This adds a constraint object to the portfolio object. Constraints are added to
+the portfolio object with the add.constraint function. Each constraint added is
+a separate object and stored in the constraints slot in the portfolio object.
+In this way, the constraints are modular and one can easily add, remove, or
+modify the constraints in the portfolio object. Main argument is the type,
+arguments to the constraint constructor are then passed through the dots (...).
+-->
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-9" style="background:;">
+  <hgroup>
+    <h2>Workflow: Add Objectives</h2>
+  </hgroup>
+  <article data-timings="">
+    <pre><code class="r">p &lt;- add.objective(portfolio = p, type = &#39;risk&#39;, name = &#39;StdDev&#39;)
+</code></pre>
+
+<p>Supported Objective types</p>
+
+<ul>
+<li>Return</li>
+<li>Risk</li>
+<li>Risk Budget</li>
+<li>Weight Concentration</li>
+</ul>
+
+<!--
+Objectives are added to the portfolio object with the add.objective function.
+Each objective added is a separate object and stored in the objectives slot in
+the portfolio object. In this way, the objectives are modular and one can easily
+add, remove, or modify the objective objects. The name argument must be a valid
+R function. Several functions are available in the PerformanceAnalytics package,
+but custom user defined functions can be used as objective functions.
+-->
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-10" style="background:;">
+  <hgroup>
+    <h2>Workflow: Run Optimization</h2>
+  </hgroup>
+  <article data-timings="">
+    <pre><code class="r">opt &lt;- optimize.portfolio(R, portfolio = p, optimize_method = &#39;random&#39;,
+                          search_size = 2000)
+
+opt.rebal &lt;- optimize.portfolio.rebalancing(R, portfolio = p,
+                                            optimize_method = &#39;random&#39;,
+                                            search_size = 2000,
+                                            rebalance_on = &#39;quarters&#39;,
+                                            training_period = 60,
+                                            rolling_window = 60)
+</code></pre>
+
+<!--
+* Notice the similarity between these two functions. You only have to specify a
+few additional arguments for the backtesting.
+
+* optimize.portfolio: Main arguments for a single period optimization are the
+returns (R), portfolio, and optimize_method. We take the portfolio object and
+parse the constraints and objectives according to the optimization method.
+
+* optimize.portfolio.rebalancing: Supports periodic rebalancing (backtesting) to
+examine out of sample performance. Helps refine constraints and objectives by
+analyzing out or sample performance. Essentially a wrapper around
+optimize.portfolio that handles the time interface.
+-->
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-11" style="background:;">
+  <hgroup>
+    <h2>Workflow: Analyze Results</h2>
+  </hgroup>
+  <article data-timings="">
+    <table><thead>
+<tr>
+<th>Visualization</th>
+<th>Data Extraction</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>plot</td>
+<td>extractObjectiveMeasures</td>
+</tr>
+<tr>
+<td>chart.Concentration</td>
+<td>extractStats</td>
+</tr>
+<tr>
+<td>chart.EfficientFrontier</td>
+<td>extractWeights</td>
+</tr>
+<tr>
+<td>chart.RiskReward</td>
+<td>print</td>
+</tr>
+<tr>
+<td>chart.RiskBudget</td>
+<td>summary</td>
+</tr>
+<tr>
+<td>chart.Weights</td>
+<td></td>
+</tr>
+</tbody></table>
+
+<!--
+Brief explanation of each function.
+-->
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-12" style="background:;">
+  <hgroup>
+    <h2>Support Multiple Solvers</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>Linear and Quadratic Programming Solvers</p>
+
+<ul>
+<li>R Optimization Infrastructure (ROI)
+
+<ul>
+<li>GLPK (Rglpk)</li>
+<li>Symphony (Rsymphony)</li>
+<li>Quadprog (quadprog)</li>
+</ul></li>
+</ul>
+
+<p>Global Solvers</p>
+
+<ul>
+<li>Random Portfolios</li>
+<li>Differential Evolution (DEoptim)</li>
+<li>Particle Swarm Optimization (pso)</li>
+<li>Generalized Simulated Annealing (GenSA)</li>
+</ul>
+
+<!---
+Brief explanation of each solver and what optimization problems are supported
+-->
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-13" style="background:;">
+  <hgroup>
+    <h2>Random Portfolios</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>PortfolioAnalytics has three methods to generate random portfolios.</p>
+
+<ol>
+<li>The <strong>sample</strong> method to generate random portfolios is based on an idea by Pat Burns.</li>
+<li>The <strong>simplex</strong> method to generate random portfolios is based on a paper by W. T. Shaw.</li>
+<li>The <strong>grid</strong> method to generate random portfolios is based on the <code>gridSearch</code> function in the NMOF package.</li>
+</ol>
+
+<!--
+* Random portfolios allow one to generate an arbitray number of portfolios based
+  on given constraints. Will cover the edges as well as evenly cover the
+  interior of the feasible space. Allows for massively parallel execution.
+
+* The sample method to generate random portfolios is based on an idea by Patrick
+  Burns. This is the most flexible method, but also the slowest, and can
+  generate portfolios to satisfy leverage, box, group, and position limit
+  constraints.
+
+* The simplex method to generate random portfolios is based on a paper by W. T.
+  Shaw. The simplex method is useful to generate random portfolios with the full
+  investment constraint, where the sum of the weights is equal to 1, and min box
+  constraints. Values for min_sum and max_sum of the leverage constraint will be
+  ignored, the sum of weights will equal 1. All other constraints such as the
+  box constraint max, group and position limit constraints will be handled by
+  elimination. If the constraints are very restrictive, this may result in very
+  few feasible portfolios remaining. Another key point to note is that the
+  solution may not be along the vertexes depending on the objective. For
+  example, a risk budget objective will likely place the portfolio somewhere on
+  the interior.
+
+* The grid method to generate random portfolios is based on the gridSearch
+  function in NMOF package. The grid search method only satisfies the min and
+  max box constraints. The min_sum and max_sum leverage constraint will likely
+  be violated and the weights in the random portfolios should be normalized.
+  Normalization may cause the box constraints to be violated and will be
+  penalized in constrained_objective.
+-->
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-14" style="background:;">
+  <hgroup>
+    <h2>Comparison of Random Portfolio Methods (Interactive!)</h2>
+  </hgroup>
+  <article data-timings="">
+    <div id = 'chart558c8f5dbaf' class = 'rChart nvd3'></div>
+
+<p>/home/rbennett/R/x86_64-pc-linux-gnu-library/3.0/rCharts/libraries/nvd3/layouts/chart.html</p>
+
+<!--
+The feasible space is computed using the the first 5 assets of the EDHEC data
+for a long only portfolio with a search size of 2000.
+-->
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-15" style="background:;">
+  <hgroup>
+    <h2>Random Portfolios: Simplex Method</h2>
+  </hgroup>
+  <article data-timings="">
+    <p><img src="figures/fev_plot.png" alt=""></p>
+
+<!--
+FEV (Face-Edge-Vertex bias values control how concentrated a portfolio is. This
+can clearly be seen in the plot. As FEV approaches infinity, the portfolio
+weight will be concentrated on a single asset. PortfolioAnalytics allows you to
+specify a vector of fev values for comprehensive coverage of the feasible space. 
+-->
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-16" style="background:;">
+  <hgroup>
+    <h2>Hierarchical (i.e. Multilayer) Optimization</h2>
+  </hgroup>
+  <article data-timings="">
+    <p><img src="mult_portf.png" alt=""></p>
+
+<p>see <a href="https://github.com/rossb34/PortfolioAnalyticsPresentation2016">PortfolioAnalytics Tutorial R/Finance 2016</a></p>
+
+<!--
+explanation of how the multilayer optimization works
+start with portfolio of subportfolios
+the subportfolios could be countries, sectors, strategies, etc.
+optimize subportfolios
+this gives us 'n' synthetic return streams for 'n' sub portfolios
+we then optimize the top level portfolio using the 'n' synthetic return streams
+-->
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-17" style="background:;">
+  <hgroup>
+    <h2>Regime Switching Model</h2>
+  </hgroup>
+  <article data-timings="">
+    <ul>
+<li>Define a model to characterize <code>n</code> regimes</li>
+<li>Define <code>n</code> portfolio specifications, 1 for each regime</li>
+</ul>
+
+<p>see <a href="https://github.com/rossb34/PortfolioAnalyticsPresentation2016">PortfolioAnalytics Tutorial R/Finance 2016</a></p>
+
+<!--
+explanation of how the multilayer optimization works
+start with portfolio of subportfolios
+the subportfolios could be countries, sectors, strategies, etc.
+optimize subportfolios
+this gives us 'n' synthetic return streams for 'n' sub portfolios
+we then optimize the top level portfolio using the 'n' synthetic return streams
+-->
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-18" style="background:;">
+  <hgroup>
+    <h2>Estimating Moments</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>Ledoit and Wolf (2003):</p>
+
+<blockquote>
+<p>&quot;The central message of this paper is that nobody should be using the sample
+covariance matrix for the purpose of portfolio optimization.&quot;</p>
+</blockquote>
+
+<ul>
+<li>Sample</li>
+<li>Shrinkage Estimators</li>
+<li>Factor Model</li>
+<li>Expressing Views
+
+<ul>
+<li><a href="https://github.com/rossb34/PortfolioAnalyticsPresentation2015">PortfolioAnalytics Tutorial R/Finance 2015</a></li>
+</ul></li>
+<li>See <a href="https://cran.r-project.org/web/packages/PortfolioAnalytics/vignettes/custom_moments_objectives.pdf">Custom Moment and Objective Functions</a> vignette</li>
+</ul>
+
+<!--
+From Ledoit and Wolf (2003), "Honey, I Shrunk the Sample Covariance Matrix"
+The central message of this paper is that nobody should be using the sample 
+covariance matrix for the purpose of portfolio optimization.
+
+Estimating moments using shrinkage estimators, factor models, views are methods
+to address the disadvantages of using sample estimates. I am not making a claim
+that one method is better than another. The method chosen depends on one's own
+situation and information/data available.
+
+Increase risk of estimation error as dimension of assets and parameters to
+estimate increase
+
+Sample Estimates Disadvantages
+  * Estimation error and the curse of dimensionality
+  * In the Mean - Variance framework, small changes in expected returns can 
+  lead to extreme portfolios (large long/short positions) in the unconstrained
+  case and concentrated (large positions in few assets) portfolios wth long
+  only constraint.
+  * Note that adding constraints have of the effect of lessening the impact of 
+  estimation error. TODO: reference? I remember Doug stating this
+
+The estimation of a covariance matrix is unstable unless the number of
+historical observations T is greater than the number of assets N. 
+10 years of data
+daily: 2500
+weekly: 520
+monthly: 120
+
+One has the choice to estimate moments with historical or simulated data.
+
+Historical Data
+  * do you have enough data?
+  * missing assets
+  * is it clean?
+
+Simulated data
+  * Model risk
+  * How well does the model describe the data?
+
+* Shrinkage Estimators
+  * Ledoit-Wolf
+  * James-Stein
+* Factor Model
+  * Fundamental
+  * Statistical
+  * Boudt et al (2014) use factor model to estimate higher order comoments
+* Expressing Views
+  * Black - Litterman
+  * Almgren and Chriss, Portfolios from Sorts
+  * Meucci, Fully Flexible Views Framework
+* Other
+  * Resampling
+  * ?
+
+-->
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-19" style="background:;">
+  <hgroup>
+    <h2>Example: U.S. Equity Sector ETF Portfolio</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>Consider a long only U.S. Equity portfolio allocation problem</p>
+
+<p>Data</p>
+
+<ul>
+<li>Monthly returns of 9 U.S. Equity Sector ETFs from 1999 to May 2016</li>
+<li>Source: Yahoo</li>
+</ul>
+
+<p>Approach</p>
+
+<ul>
+<li>Baseline portfolio </li>
+<li>Box constraints</li>
+<li>Custom objective function</li>
+<li>Analysis</li>
+</ul>
+
+<p>Goal is to outperform the S&amp;P 500 (SPY as a proxy)</p>
+
+<!--
+* start with a simple portfolio specification, then add more complexity
+-->
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-20" style="background:;">
+  <hgroup>
+    <h2>Baseline Portfolio Specification</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>Baseline portfolio specification to minimize portfolio standard deviation, 
+subject to full investment and long only constraints.</p>
+
+<pre><code class="r"># base portfolio specification
+p &lt;- portfolio.spec(assets = colnames(R), 
+                    weight_seq = generatesequence(min = 0, max = 1, by = 0.002))
+p &lt;- add.constraint(portfolio = p, type = &#39;weight_sum&#39;, 
+                    min_sum = 0.99, max_sum = 1.01)
+p &lt;- add.constraint(portfolio = p, type = &#39;box&#39;, min = 0, max = 1)
+p &lt;- add.objective(portfolio = p, type = &#39;return&#39;, name = &#39;mean&#39;, multiplier = 0)
+p &lt;- add.objective(portfolio = p, type = &#39;risk&#39;, name = &#39;StdDev&#39;)
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-21" style="background:;">
+  <hgroup>
+    <h2>Box Constraints</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>Add box constraints such that for each asset the minimum weight is 5% and the
+maximum weight is 20%.</p>
+
+<ul>
+<li>copy the baseline portfolio specification</li>
+<li>replace the second index of the constraint object</li>
+</ul>
+
+<pre><code class="r"># portfolio specification with box constraints
+p.box &lt;- p
+p.box &lt;- add.constraint(portfolio = p.box, type = &#39;box&#39;, 
+                        min = 0.05, max = 0.20, indexnum = 2)
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-22" style="background:;">
+  <hgroup>
+    <h2>Single Period Optimization</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>Run a single period optimization for the portfolio specifications</p>
+
+<pre><code class="r"># generate the random portfolios
+rp &lt;- random_portfolios(portfolio = p, permutations = rp.n, method = &#39;sample&#39;)
+rp &lt;- normalize.weights(rp)
+rp.box &lt;- random_portfolios(portfolio = p.box, permutations = rp.n, method = &#39;sample&#39;)
+rp.box &lt;- normalize.weights(rp.box)
+
+# run the optimizations
+opt.base &lt;- optimize.portfolio(R = tail(R, 36), portfolio = p, rp = rp,
+                               optimize_method = &#39;random&#39;, trace = TRUE)
+opt.box &lt;- optimize.portfolio(R = tail(R, 36), portfolio = p.box, rp = rp.box,
+                              optimize_method = &#39;random&#39;, trace = TRUE)
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-23" style="background:;">
+  <hgroup>
+    <h2>Feasible Space Comparison</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>Impact of box constraints on the feasible space of the in sample period.</p>
+
+<p><img src="figures/feasible_base_box.png" alt=""></p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-24" style="background:;">
+  <hgroup>
+    <h2>Optimization with Periodic Rebalancing</h2>
+  </hgroup>
+  <article data-timings="">
+    <pre><code class="r">opt.base.rebal &lt;- optimize.portfolio.rebalancing(R = R, portfolio = p,
+                                                 optimize_method = &#39;random&#39;,
+                                                 rp = rp, trace = TRUE,
+                                                 rebalance_on = &#39;quarters&#39;,
+                                                 training_period = 36,
+                                                 rolling_window = 36)
+opt.base.rebal.r &lt;- Return.portfolio(R, weights = extractWeights(opt.base.rebal))
+colnames(opt.base.rebal.r) &lt;- &#39;base&#39;
+
+opt.box.rebal &lt;- optimize.portfolio.rebalancing(R = R, portfolio = p.box,
+                                                optimize_method = &#39;random&#39;,
+                                                rp = rp.box, trace = TRUE,
+                                                rebalance_on = &#39;quarters&#39;,
+                                                training_period = 36,
+                                                rolling_window = 36)
+opt.box.rebal.r &lt;- Return.portfolio(R, weights = extractWeights(opt.box.rebal))
+colnames(opt.box.rebal.r) &lt;- &#39;box&#39;
+</code></pre>
+
+<!--
+* evaluate out of sample performance
+-->
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-25" style="background:;">
+  <hgroup>
+    <h2>Baseline Optimal Weights</h2>
+  </hgroup>
+  <article data-timings="">
+    <pre><code class="r">chart.Weights(opt.base.rebal, main = &#39;Baseline Portfolio Optimal Weights&#39;)
+</code></pre>
+
+<p><img src="figures/opt_base_rebal_weights.png" alt=""></p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-26" style="background:;">
+  <hgroup>
+    <h2>Box Constrained Optimal Weights</h2>
+  </hgroup>
+  <article data-timings="">
+    <pre><code class="r">chart.Weights(opt.box.rebal, main = &#39;Box Constrained Portfolio Optimal Weights&#39;)
+</code></pre>
+
+<p><img src="figures/opt_box_rebal_weights.png" alt=""></p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-27" style="background:;">
+  <hgroup>
+    <h2>Baseline and Constrained Performance Summary</h2>
+  </hgroup>
+  <article data-timings="">
+    <pre><code class="r">opt.r &lt;- cbind(opt.base.rebal.r, opt.box.rebal.r)
+charts.PerformanceSummary(opt.r, main = &quot;Performance Summary&quot;)
+</code></pre>
+
+<p><img src="figures/base_box_perf.png" alt=""></p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-28" style="background:;">
+  <hgroup>
+    <h2>Tracking Error Custom Objective Function</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>Define a custom objective function for penalized tracking error</p>
+
+<pre><code class="r">te.target &lt;- function(R, weights, Rb, min.te = 0.02, max.te = 0.05, scale = 12){
+    r &lt;- Return.portfolio(R = R, weights = weights)
+    Rb &lt;- Rb[index(r)]
+    te &lt;- sd(r - Rb) * sqrt(scale)
+    # penalize tracking error outside of [min.te, max.te] range
+    out &lt;- 0
+    if(te &gt; max.te)
+        out &lt;- (te - max.te) * 10000
+    if(te &lt; min.te)
+        out &lt;- (min.te - te) * 10000
+    out
+}
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-29" style="background:;">
+  <hgroup>
+    <h2>Tracking Error Target Optimization</h2>
+  </hgroup>
+  <article data-timings="">
+    <ul>
+<li>Add tracking error  as an objective to the baseline portfolio specification</li>
+<li>Specify the arguments to <code>te.target</code> as a named list</li>
+<li>Target an Annualized Tracking Error in the range of 3% to 5%</li>
+</ul>
+
+<pre><code class="r">p.te &lt;- p
+p.te &lt;- add.objective(portfolio = p, type = &#39;risk&#39;, name = &#39;te.target&#39;,
+                      arguments = list(Rb = R.mkt, scale = 12,
+                                       min.te = 0.03, max.te = 0.05))
+
+opt.te.rebal &lt;- optimize.portfolio.rebalancing(R = R, portfolio = p.te,
+                                                optimize_method = &#39;random&#39;,
+                                                rp = rp, trace = TRUE,
+                                                rebalance_on = rebal.period,
+                                                training_period = n.train,
+                                                rolling_window = n.roll) 
+opt.te.rebal.r &lt;- Return.portfolio(R, weights = extractWeights(opt.te.rebal))
+colnames(opt.te.rebal.r) &lt;- &#39;te.target&#39;
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-30" style="background:;">
+  <hgroup>
+    <h2>Tracking Error Target Performance Summary</h2>
+  </hgroup>
+  <article data-timings="">
+    <pre><code class="r">opt.r &lt;- na.omit(cbind(opt.base.rebal.r, opt.box.rebal.r, opt.te.rebal.r, R.mkt))
+charts.PerformanceSummary(opt.r, main = &quot;Performance Summary&quot;)
+</code></pre>
+
+<p><img src="figures/base_box_te_perf.png" alt=""></p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-31" style="background:;">
+  <hgroup>
+    <h2>Portfolio Simulation and Analysis</h2>
+  </hgroup>
+  <article data-timings="">
+    <ul>
+<li>Random portfolios to simulate portfolios of zero skill managers</li>
+<li>Feasible portfolios by construction</li>
+<li>Monte Carlo requires a model specification</li>
+<li>Time series dependency with bootstrap</li>
+<li>No guarantee of a feasible portfolio with bootstrap or Monte Carlo Simulation</li>
+</ul>
+
+<!--
+simulate the returns of feasible portfolios based on the specified constraints
+and rebalancing frequency
+-->
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-32" style="background:;">
+  <hgroup>
+    <h2>Simulate Portfolio Returns</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>Simulate portfolio returns using the random portfolios generated from the
+baseline portfolio specification and box constrained portfolio specification.</p>
+
+<pre><code class="r">sim.base &lt;- simulate.portfolio(R, rp = rp, simulations = 5000, 
+                               rebalance_on = &#39;quarters&#39;)
+sim.box &lt;- simulate.portfolio(R, rp = rp.box, simulations = 5000, 
+                              rebalance_on = &#39;quarters&#39;)
+sim &lt;- cbind(sim.box, sim.base)
+charts.PerformanceSummary(sim, colorset = c(rep(&quot;salmon&quot;, ncol(sim.box)), 
+                                            rep(&#39;gray&#39;, ncol(sim.base))), 
+                          legend.loc = NULL, main = &quot;Simulated Performance Summary&quot;)
+legend(&#39;topleft&#39;, legend = c(&#39;constrained&#39;, &#39;unconstrained&#39;), 
+       fill = c(&#39;salmon&#39;, &#39;gray&#39;), bty = &#39;n&#39;)
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-33" style="background:;">
+  <hgroup>
+    <h2>Simulated Portfolio Performance Summary</h2>
+  </hgroup>
+  <article data-timings="">
+    <p><img src="figures/sim_perf.png" alt=""></p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-34" style="background:;">
+  <hgroup>
+    <h2>Simulated vs. Optimal Portfolios: Sharpe Ratio Distribution</h2>
+  </hgroup>
+  <article data-timings="">
+    <p><img src="figures/sim_base_sr.png" alt=""></p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-35" style="background:;">
+  <hgroup>
+    <h2>Simulated vs. Optimal Portfolios: Sharpe Ratio Distribution</h2>
+  </hgroup>
+  <article data-timings="">
+    <p><img src="figures/sim_box_sr.png" alt=""></p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-36" style="background:;">
+  <hgroup>
+    <h2>Simulated vs. Optimal Portfolios: Tracking Error Distribution</h2>
+  </hgroup>
+  <article data-timings="">
+    <p><img src="figures/sim_base_te.png" alt=""></p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-37" style="background:;">
+  <hgroup>
+    <h2>Improvements</h2>
+  </hgroup>
+  <article data-timings="">
+    <ul>
+<li>Risk Measures
+
+<ul>
+<li>Expected Shortfall</li>
+<li>Component contribution to risk (i.e. Risk Budgeting)</li>
+</ul></li>
+<li>Better Estimates
+
+<ul>
+<li>Factor Model</li>
+<li>GARCH</li>
+<li>Return Forecasts</li>
+</ul></li>
+<li>More Data
+
+<ul>
+<li>Weekly or daily frequency</li>
+<li>downsampling to monthly frequency &quot;throws away&quot; a lot of data</li>
+<li>Estimates based on higher frequency data</li>
+</ul></li>
+</ul>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-38" style="background:;">
+  <hgroup>
+    <h2>Conclusion</h2>
+  </hgroup>
+  <article data-timings="">
+    <ul>
+<li>Introduced the goals and summary of PortfolioAnalytics</li>
+<li>Demonstrated the flexibility through examples</li>
+<li>Plans for continued development
+
+<ul>
+<li>Interface to \(parma\)</li>
+<li>Additional solvers</li>
+<li>&quot;Gallery&quot; of examples</li>
+</ul></li>
+</ul>
+
+<h4>Acknowledgements</h4>
+
+<p>Many thanks to...</p>
+
+<ul>
+<li>Google: funding Google Summer of Code (GSoC) for 2013 and 2014</li>
+<li>GSoC Mentors: Brian Peterson, Peter Carl, Doug Martin, and Guy Yollin</li>
+<li>R/Finance Committee</li>
+</ul>
+
+<!---
+Hammer home the point of modular architecture and ability to "plug" custom
+moments and objective functions to define your own optimization problems
+- One of the best things about GSoC is the opportunity to work and interact
+with the mentors.
+- Thank the GSoC mentors for offering help and guidance during the GSoC project
+and after as I continued to work on the PortfolioAnalytics package.
+- R/Finance Committee for the conference and the opportunity to talk about
+PortfolioAnalytics.
+- Google for funding the Google Summer of Code for PortfolioAnalytics and many
+other proposals for R
+
+Thank everyone for attending
+I hope they learned something and are motivated to use PortfolioAnalytics
+-->
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-39" style="background:;">
+  <hgroup>
+    <h2>PortfolioAnalytics Links</h2>
+  </hgroup>
+  <article data-timings="">
+    <ul>
+<li><p><a href="http://cran.at.r-project.org/web/packages/PortfolioAnalytics/index.html">PortfolioAnalytics on CRAN</a></p></li>
+<li><p><a href="https://github.com/braverock/PortfolioAnalytics">PortfolioAnalytics on GitHub</a></p></li>
+</ul>
+
+<p>Source code for the slides</p>
+
+<ul>
+<li><a href="https://github.com/rossb34/PortfolioAnalyticsPresentation2017">https://github.com/rossb34/PortfolioAnalyticsPresentation2017</a></li>
+</ul>
+
+<p>and view it here</p>
+
+<ul>
+<li><a href="http://rossb34.github.io/PortfolioAnalyticsPresentation2017/">http://rossb34.github.io/PortfolioAnalyticsPresentation2017/</a></li>
+</ul>
+
+<p>DataCamp Course</p>
+
+<ul>
+<li><a href="https://www.datacamp.com/courses/intermediate-portfolio-analysis-in-r">https://www.datacamp.com/courses/intermediate-portfolio-analysis-in-r</a></li>
+</ul>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-40" style="background:;">
+  <hgroup>
+    <h2>Any Questions?</h2>
+  </hgroup>
+  <article data-timings="">
+    
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-41" style="background:;">
+  <hgroup>
+    <h2>References and Useful Links</h2>
+  </hgroup>
+  <article data-timings="">
+    <ul>
+<li><a href="http://cran.r-project.org/web/packages/ROI/index.html">ROI</a></li>
+<li><a href="http://cran.r-project.org/web/packages/DEoptim/index.html">DEoptim</a></li>
+<li><a href="http://cran.r-project.org/web/packages/pso/index.html">pso</a></li>
+<li><a href="http://cran.r-project.org/web/packages/GenSA/index.html">GenSA</a></li>
+<li><a href="http://cran.r-project.org/web/packages/PerformanceAnalytics/index.html">PerformanceAnalytics</a></li>
+<li><a href="http://www.burns-stat.com/pages/Finance/randport_practice_theory_annotated.pdf">Patrick Burns Random Portfolios</a></li>
+<li><a href="http://papers.ssrn.com/sol3/papers.cfm?abstract_id=1856476">W.T. Shaw Random Portfolios</a></li>
+<li><a href="http://docs.edhec-risk.com/EAID-2008-Doc/documents/Higher_Order_Comoments.pdf">Improved Forecasts of Higher-Order Co-moments and Implications for Portfolio Selection</a></li>
+<li><a href="http://papers.ssrn.com/sol3/papers.cfm?abstract_id=2409603">Higher Order Comoments of Multifactor Models and Asset Allocation</a></li>
+</ul>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+    <slide class="backdrop"></slide>
+  </slides>
+  <div class="pagination pagination-small" id='io2012-ptoc' style="display:none;">
+    <ul>
+      <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=1 title='Overview'>
+         1
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=2 title='Modern Portfolio Theory'>
+         2
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=3 title='Portfolio Optimization Objectives'>
+         3
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=4 title='Challenges of Portfolio Optimization in R'>
+         4
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=5 title='PortfolioAnalytics Overview'>
+         5
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=6 title='PortfolioAnalytics Framework'>
+         6
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=7 title='Workflow: Specify Portfolio'>
+         7
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=8 title='Workflow: Add Constraints'>
+         8
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=9 title='Workflow: Add Objectives'>
+         9
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=10 title='Workflow: Run Optimization'>
+         10
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=11 title='Workflow: Analyze Results'>
+         11
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=12 title='Support Multiple Solvers'>
+         12
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=13 title='Random Portfolios'>
+         13
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=14 title='Comparison of Random Portfolio Methods (Interactive!)'>
+         14
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=15 title='Random Portfolios: Simplex Method'>
+         15
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=16 title='Hierarchical (i.e. Multilayer) Optimization'>
+         16
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=17 title='Regime Switching Model'>
+         17
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=18 title='Estimating Moments'>
+         18
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=19 title='Example: U.S. Equity Sector ETF Portfolio'>
+         19
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=20 title='Baseline Portfolio Specification'>
+         20
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=21 title='Box Constraints'>
+         21
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=22 title='Single Period Optimization'>
+         22
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=23 title='Feasible Space Comparison'>
+         23
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=24 title='Optimization with Periodic Rebalancing'>
+         24
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=25 title='Baseline Optimal Weights'>
+         25
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=26 title='Box Constrained Optimal Weights'>
+         26
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=27 title='Baseline and Constrained Performance Summary'>
+         27
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=28 title='Tracking Error Custom Objective Function'>
+         28
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=29 title='Tracking Error Target Optimization'>
+         29
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=30 title='Tracking Error Target Performance Summary'>
+         30
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=31 title='Portfolio Simulation and Analysis'>
+         31
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=32 title='Simulate Portfolio Returns'>
+         32
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=33 title='Simulated Portfolio Performance Summary'>
+         33
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=34 title='Simulated vs. Optimal Portfolios: Sharpe Ratio Distribution'>
+         34
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=35 title='Simulated vs. Optimal Portfolios: Sharpe Ratio Distribution'>
+         35
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=36 title='Simulated vs. Optimal Portfolios: Tracking Error Distribution'>
+         36
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=37 title='Improvements'>
+         37
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=38 title='Conclusion'>
+         38
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=39 title='PortfolioAnalytics Links'>
+         39
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=40 title='Any Questions?'>
+         40
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=41 title='References and Useful Links'>
+         41
+      </a>
+    </li>
+  </ul>
+  </div>  <!--[if IE]>
+    <script 
+      src="http://ajax.googleapis.com/ajax/libs/chrome-frame/1/CFInstall.min.js">  
+    </script>
+    <script>CFInstall.check({mode: 'overlay'});</script>
+  <![endif]-->
+</body>
+  <!-- Load Javascripts for Widgets -->
+  
+  <!-- MathJax: Fall back to local if CDN offline but local image fonts are not supported (saves >100MB) -->
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [['$','$'], ['\\(','\\)']],
+        processEscapes: true
+      }
+    });
+  </script>
+  <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/2.0-latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  <!-- <script src="https://c328740.ssl.cf1.rackcdn.com/mathjax/2.0-latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+  </script> -->
+  <script>window.MathJax || document.write('<script type="text/x-mathjax-config">MathJax.Hub.Config({"HTML-CSS":{imageFont:null}});<\/script><script src="libraries/widgets/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"><\/script>')
+</script>
+<!-- LOAD HIGHLIGHTER JS FILES -->
+  <script src="libraries/highlighters/highlight.js/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <!-- DONE LOADING HIGHLIGHTER JS FILES -->
+   
+  </html>
