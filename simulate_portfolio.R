@@ -13,13 +13,30 @@ simulate.portfolio <- function(R, rp, simulations = 10, rebalance_on = "quarters
 }
 
 # portfolio simulations
-simulate.portfolio2 <- function(R, rp, simulations = 10, rebalance_on = "quarters", ...){
+simulate.portfolio2 <- function(R, rp, simulations = 10, dynamic = TRUE, rebalance_on = "quarters", ...){
+  rebal.idx <- index(R[endpoints(R, on = rebalance_on, k = 1)])
+  out <- foreach(i = 1:simulations, .combine = cbind) %dopar% {
+    # randomly sample random portfolios and build a time series of weights at
+    # the specified rebalance frequency
+    if(dynamic){
+      w <- xts(rp[sample.int(n = nrow(rp), size = length(rebal.idx), replace = TRUE),], rebal.idx)
+      r <- Return.portfolio(R, weights = w)
+    } else {
+      w <- as.vector(rp[sample.int(n = nrow(rp), size = 1, replace = TRUE),])
+      r <- Return.portfolio(R[-1,], weights = w, rebalance_on = rebalance_on)
+    }
+    r
+  }
+  out
+}
+
+simulate.portfolio.fixed <- function(R, rp, simulations = 10, rebalance_on = "quarters", ...){
   rebal.idx <- index(R[endpoints(R, on = rebalance_on, k = 1)])
   out <- foreach(i = 1:simulations, .combine = cbind) %dopar% {
       # randomly sample random portfolios and build a time series of weights at
       # the specified rebalance frequency
-      w <- xts(rp[sample.int(n = nrow(rp), size = length(rebal.idx), replace = TRUE),], rebal.idx)
-      r <- Return.portfolio(R, weights = w)
+      w <- as.vector(rp[sample.int(n = nrow(rp), size = 1, replace = TRUE),])
+      r <- Return.portfolio(R, weights = w, rebalance_on = rebalance_on)
       r
   }
   out
@@ -30,7 +47,7 @@ information.ratio.component <- function(x, Rb, scale = 12){
   x.te <- vector('numeric', ncol(x))
   x.ir <- vector('numeric', ncol(x))
   for(i in 1:ncol(x)){
-    ra <- x[,i]
+    ra <- na.omit(x[,i])
     rb <- Rb[index(ra)]
     ap <- Return.annualized(ra) - Return.annualized(rb)
     te <- sd(ra - rb) * sqrt(scale)
@@ -50,7 +67,7 @@ sharpe.ratio.component <- function(x, scale = 12){
   x.sd <- vector('numeric', ncol(x))
   x.sr <- vector('numeric', ncol(x))
   for(i in 1:ncol(x)){
-    rr <- x[,i]
+    rr <- na.omit(x[,i])
     n <- nrow(rr)
     a.ret <- prod(1 + rr)^(scale / n) - 1
     a.sd <- sd(rr) * sqrt(scale)
