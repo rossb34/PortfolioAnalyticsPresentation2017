@@ -23,18 +23,19 @@ require(methods)
 * Demonstrate PortfolioAnalytics with Examples
 
 <div class="notes">
-* Discuss Portfolio Optimization
-    * Background and challenges of portfolio theory
-* Introduce PortfolioAnalytics
-    * What PortfolioAnalytics does and the problems it solves
-* Demonstrate PortfolioAnalytics with Examples
-    * Brief overview of the examples I will be giving
-    * use random portfolios to explore the feasible space of constrained portfolios
-    * demonstrate framework to solve hierarchical portfolio optimization problem
+
+* Start with some background on Modern Portfolio Theory (MPT) and portfolio
+  optimization.
+* Detailed explanation of the PortfolioAnalytics package to set up a portfolio
+  problem, run the optimization, and analyze the results of the optimization.
+* We will finish with a set of examples to demonstrate some of the features
+  of the package.
+
 </div>
 
 
 ## Modern Portfolio Theory
+
 "Modern" Portfolio Theory (MPT) was introduced by Harry Markowitz in 1952.
 
 In general, MPT states that an investor's objective is to maximize portfolio
@@ -48,14 +49,17 @@ Common Objectives
 How do we define risk? What about more complex objectives and constraints?
 
 <div class="notes">
-Although Modern Portfolio Theory was introduced over 60 years ago, it
-establishes a framework for defining and evaluating objectives. In the Modern
-Portfolio Theory framework, the optimal portfolio for an investor to hold is the
-portfolio that maximizes portfolio expected return for a given level of risk.
-The academic approach follows the Markowitz approach using mean return as a
-measure of gain and standard deviation of returns as a measure of risk. However,
-most real world problems consider different measures of risk as well as multiple
-objectives and constraints.
+
+* Although Modern Portfolio Theory was introduced over 60 years ago, it
+  establishes a framework for defining and evaluating objectives.
+* In the Modern Portfolio Theory framework, the optimal portfolio for an
+  investor to hold is the portfolio that maximizes portfolio expected return for
+  a given level of risk.
+* The academic approach follows the Markowitz approach using mean return as a
+  measure of gain and standard deviation of returns as a measure of risk.
+  However, most real world problems consider different measures of risk as well
+  as multiple objectives and constraints.
+  
 </div>
 
 
@@ -81,7 +85,7 @@ Here are some common objectives
   * sharpe ratio, information ratio
 * Form a portfolio based on the risk contribution of each asset
 * Maximize a utility function
-* track an index, fund, or set of funds with minimal tracking error
+* Track an index, fund, or set of funds with minimal tracking error
 * How do we formulate and solve a portfolio optimization based on these
   objectives?
 </div>
@@ -97,24 +101,24 @@ Here are some common objectives
 * Closed-Form vs. Global Solvers
 
 <div class="notes">
-Portfolio optimization is a hard problem. One challenge is knowing what solver
-to use and the capabilities and limits of the chosen solver. A solver is an
-algorithm designed to find the optimal solution to a given problem. You can
-chose a solver based on the objective or formulate the objective to fit the
-chosen solver. Ideally, you want the flexibility of effortlessly switching
-between solvers depending on the problem. In many cases, there is more than one
-solver that can solve the problem and you should evaluate both. An example of a
-closed-form solver is a quadratic programming solver. The main advantage of
-closed-form solvers is that they solve a given problem very fast and efficiently
-and return an exact solution. The main drawback is that the problem must be
-formulated in a very specific way that is typically unique to the solver. An
-example of a global solver is differential evolution optimization. Global
-solvers have the advantage of being able to solve more general types of problems
-and find the approximate solution of the global minimum or maximum of the
-objective function with local minima or maxima. However, the algorithms used in
-global solvers are relatively more complex and more compute intensive. In this
-tutorial, you will use both closed form and global solvers and learn how
-PortfolioAnalytics overcomes these challenges of portfolio optimization.
+
+* Portfolio optimization is a hard problem.
+* One challenge is knowing what solver to use and the capabilities and limits
+  of the chosen solver. 
+* You can chose a solver based on the objective or formulate the objective to
+  fit the chosen solver. Ideally, you want the flexibility of effortlessly
+  switching between solvers depending on the problem.
+* In many cases, there is more than one solver that can solve the problem and
+  you should evaluate both.
+* The main advantage of closed-form solvers is that they solve a given problem
+  very fast and efficiently and return an exact solution. The main drawback is
+  that the problem must be formulated in a very specific way that is typically
+  unique to the solver. 
+* Global solvers have the advantage of being able to solve more general types
+  of problems and find the approximate solution of the global minimum or maximum
+  of the objective function with local minima or maxima. However, the algorithms
+  used in global solvers are relatively more complex and more compute intensive.
+
 </div>
 
 
@@ -135,21 +139,23 @@ Supports:
 * parallel computing
 
 <div class="notes">
+
 * PortfolioAnalytics was designed specifically to address the problems discussed
-in the previous slide. 
+  in the previous slide. 
 * Key components of the architecture of PortfolioAnalytics are modularity and
-flexibility. The multiple types and modularity of constraints and objectives
-allow you to add, remove, and combine multiple constraint and objective types
-very easily. 
+  flexibility. The multiple types and modularity of constraints and objectives
+  allow you to add, remove, and combine multiple constraint and objective types
+  very easily. 
 * An objective function can be defined as any valid R function. This means that 
-you are not limited to a specific type or set of problems.
+  you are not limited to a specific type or set of problems.
 * Like objective functions, you can define custom moment functions as any valid
-R function.
+  R function.
 * Visualization helps to build intuition about the problem and understand the
-feasible space of portfolios.
+  feasible space of portfolios.
 * Another key benefit is that PortfolioAnalytics supports several solvers and
-allows you to specify different solvers with minimal or no changes to the
-portfolio specification.
+  allows you to specify different solvers with minimal or no changes to the
+  portfolio specification.
+
 </div>
 
 
@@ -160,20 +166,23 @@ knitr::include_graphics('opt_fig.png')
 ```
 
 <div class="notes">
-High level portfolio optimization framework
 
-This diagram is a high level representation of a portfolio optimization
-framework. The inputs are the assets, constraints, objectives, and moments of
-asset returns. The assets, constraints, and objectives are defined by the
-portfolio manager. The workflow in PortfolioAnalytics follows this diagram.
-First, you specify a portfolio of assets, then add constraints and objectives to
-the portfolio specification. Next, you run the optimization given the portfolio
-specification and estimates of asset return moments. The final step is to
-analyze the optimal portfolio which is the output of the solver.
+* This diagram is a high level representation of a portfolio optimization
+  framework.
+* The inputs are the assets, constraints, objectives, and moments of
+  asset returns. The assets, constraints, and objectives are defined by the
+  portfolio manager.
+* The workflow in PortfolioAnalytics follows this diagram. 
+* First, you specify a portfolio of assets, then add constraints and objectives
+  to the portfolio specification. Next, you run the optimization given the
+  portfolio specification and estimates of asset return moments. The final step
+  is to analyze the optimal portfolio which is the output of the solver.
+
 </div>
 
 
 ## Workflow: Specify Portfolio
+
 ```{r, eval = TRUE}
 p <- portfolio.spec(assets = c('AAPL', 'MSFT', 'GOOG'))
 print(p)
@@ -193,6 +202,7 @@ assets.
 
 
 ## Workflow: Add Constraints
+
 ```{r, eval = FALSE}
 # weights sum to 1
 p <- add.constraint(portfolio = p, type = 'weight_sum',
@@ -224,6 +234,7 @@ arguments to the constraint constructor are then passed through the dots (...).
 
 
 ## Workflow: Add Objectives
+
 ```{r, eval = FALSE}
 p <- add.objective(portfolio = p, type = 'risk', name = 'StdDev')
 ```
@@ -246,6 +257,7 @@ but custom user defined functions can be used as objective functions.
 
 
 ## Workflow: Run Optimization
+
 ```{r, eval = FALSE}
 opt <- optimize.portfolio(R, portfolio=p, optimize_method='random',
                           search_size=2000)
@@ -260,16 +272,16 @@ opt.rebal <- optimize.portfolio.rebalancing(R, portfolio=p,
 
 <div class="notes">
 * Notice the similarity between these two functions. You only have to specify a
-few additional arguments for the backtesting.
+  few additional arguments for the backtesting.
 
 * optimize.portfolio: Main arguments for a single period optimization are the
-returns (R), portfolio, and optimize_method. We take the portfolio object and
-parse the constraints and objectives according to the optimization method.
+  returns (R), portfolio, and optimize_method. We take the portfolio object and
+  parse the constraints and objectives according to the optimization method.
 
 * optimize.portfolio.rebalancing: Supports periodic rebalancing (backtesting) to
-examine out of sample performance. Helps refine constraints and objectives by
-analyzing out or sample performance. Essentially a wrapper around
-optimize.portfolio that handles the time interface.
+  examine out of sample performance. Helps refine constraints and objectives by
+  analyzing out or sample performance. Essentially a wrapper around
+  optimize.portfolio that handles the time interface.
 </div>
 
 
@@ -305,8 +317,14 @@ Global Solvers
 * Particle Swarm Optimization (pso)
 * Generalized Simulated Annealing (GenSA)
 
-<div class="notes">-
-Brief explanation of each solver and what optimization problems are supported
+<div class="notes">
+
+* PortfolioAnalytics supports the following solvers LP, QP, and global solvers.
+* The LP and QP solvers use the ROI package as an interface the actual solvers.
+* LP and QP solvers only solve a limited set of problems, specifically problems
+  with a linear or quadratic objective function and linear constraints.
+* The global solvers are able to solver a much larger set of problems and will
+  always find an approximate solution.
 </div>
 
 
@@ -322,12 +340,10 @@ PortfolioAnalytics has three methods to generate random portfolios.
 * Random portfolios allow one to generate an arbitray number of portfolios based
   on given constraints. Will cover the edges as well as evenly cover the
   interior of the feasible space. Allows for massively parallel execution.
-
 * The sample method to generate random portfolios is based on an idea by Patrick
   Burns. This is the most flexible method, but also the slowest, and can
   generate portfolios to satisfy leverage, box, group, and position limit
   constraints.
-
 * The simplex method to generate random portfolios is based on a paper by W. T.
   Shaw. The simplex method is useful to generate random portfolios with the full
   investment constraint, where the sum of the weights is equal to 1, and min box
@@ -339,7 +355,6 @@ PortfolioAnalytics has three methods to generate random portfolios.
   solution may not be along the vertexes depending on the objective. For
   example, a risk budget objective will likely place the portfolio somewhere on
   the interior.
-
 * The grid method to generate random portfolios is based on the gridSearch
   function in NMOF package. The grid search method only satisfies the min and
   max box constraints. The min_sum and max_sum leverage constraint will likely
@@ -350,6 +365,7 @@ PortfolioAnalytics has three methods to generate random portfolios.
 
 
 ## Comparison of Random Portfolio Methods (Interactive!)
+
 ```{r, results = 'asis', comment = NA, message = F, echo = F}
 load("figures/rp_viz.rda")
 rp_viz$show('inline')
@@ -367,10 +383,11 @@ knitr::include_graphics('figures/fev_plot.png')
 ```
 
 <div class="notes">
-FEV (Face-Edge-Vertex bias values control how concentrated a portfolio is. This
-can clearly be seen in the plot. As FEV approaches infinity, the portfolio
-weight will be concentrated on a single asset. PortfolioAnalytics allows you to
-specify a vector of fev values for comprehensive coverage of the feasible space. 
+* FEV (Face-Edge-Vertex) bias values control how concentrated a portfolio is. This
+  can clearly be seen in the plot.
+* The intuition is that as FEV approaches infinity, the portfolio weight will
+  be concentrated on a single asset. PortfolioAnalytics allows you to specify a
+  vector of fev values for comprehensive coverage of the feasible space. 
 </div>
 
 
@@ -383,12 +400,16 @@ knitr::include_graphics('mult_portf.png')
 see [PortfolioAnalytics Tutorial R/Finance 2016](https://github.com/rossb34/PortfolioAnalyticsPresentation2016)
 
 <div class="notes">
-explanation of how the multilayer optimization works
-start with portfolio of subportfolios
-the subportfolios could be countries, sectors, strategies, etc.
-optimize subportfolios
-this gives us 'n' synthetic return streams for 'n' sub portfolios
-we then optimize the top level portfolio using the 'n' synthetic return streams
+
+* In the general case, you specify a set of sub-portfolios, each with their
+  own unique set of assets, constraints, and objectives. You then specify
+  the "top" level portfolio constraints and objectives for determining the
+  optimal allocation.
+* Examples
+    * multi-factor portfolio
+    * global portfolio
+    * sector portfolio
+
 </div>
 
 
@@ -400,12 +421,14 @@ we then optimize the top level portfolio using the 'n' synthetic return streams
 see [PortfolioAnalytics Tutorial R/Finance 2016](https://github.com/rossb34/PortfolioAnalyticsPresentation2016)
 
 <div class="notes">
-explanation of how the multilayer optimization works
-start with portfolio of subportfolios
-the subportfolios could be countries, sectors, strategies, etc.
-optimize subportfolios
-this gives us 'n' synthetic return streams for 'n' sub portfolios
-we then optimize the top level portfolio using the 'n' synthetic return streams
+
+* Examples:
+    * High/Low Volatility Regime Model: portfolio specification that is more
+      defensive in the high volatility regime and more aggressive in a low
+      volatility regime.
+    * Conviction of forecasts: strong/indifferent/weak
+    * Timing/rotation: adjusts constraints
+
 </div>
 
 
@@ -425,59 +448,28 @@ Ledoit and Wolf (2003):
 * See [Custom Moment and Objective Functions](https://cran.r-project.org/web/packages/PortfolioAnalytics/vignettes/custom_moments_objectives.pdf) vignette
 
 <div class="notes">
-From Ledoit and Wolf (2003), "Honey, I Shrunk the Sample Covariance Matrix"
-The central message of this paper is that nobody should be using the sample 
-covariance matrix for the purpose of portfolio optimization.
 
-Estimating moments using shrinkage estimators, factor models, views are methods
-to address the disadvantages of using sample estimates. I am not making a claim
-that one method is better than another. The method chosen depends on one's own
-situation and information/data available.
-
-Increase risk of estimation error as dimension of assets and parameters to
-estimate increase
-
-Sample Estimates Disadvantages
-  * Estimation error and the curse of dimensionality
-  * In the Mean - Variance framework, small changes in expected returns can 
-  lead to extreme portfolios (large long/short positions) in the unconstrained
-  case and concentrated (large positions in few assets) portfolios wth long
-  only constraint.
-  * Note that adding constraints have of the effect of lessening the impact of 
-  estimation error. TODO: reference? I remember Doug stating this
-
-The estimation of a covariance matrix is unstable unless the number of
-historical observations T is greater than the number of assets N. 
-10 years of data
-daily: 2500
-weekly: 520
-monthly: 120
-
-One has the choice to estimate moments with historical or simulated data.
-
-Historical Data
-  * do you have enough data?
-  * missing assets
-  * is it clean?
-
-Simulated data
-  * Model risk
-  * How well does the model describe the data?
-
-* Shrinkage Estimators
-  * Ledoit-Wolf
-  * James-Stein
-* Factor Model
-  * Fundamental
-  * Statistical
-  * Boudt et al (2014) use factor model to estimate higher order comoments
-* Expressing Views
-  * Black - Litterman
-  * Almgren and Chriss, Portfolios from Sorts
-  * Meucci, Fully Flexible Views Framework
-* Other
-  * Resampling
-  * ?
+* What I am referring to as the asset return moments are properties of the
+  distribution of asset returns. The first moment is the expected returns
+  vector, the second moment is the variance-covariance matrix, the third moment
+  is the coskewness matrix, and the fourth moment is the cokurtosis matrix.
+* There is a lot of research in the area of different models and methods for
+  estimating asset return moments for portfolio optimization and risk models.
+  In their 2003 paper, Ledoit and Wolf claim that the sample covariance matrix
+  should not be used in portfolio optimization.
+* Methods for estimating moments include, but are not limited to sample
+  estimates, shrinkage estimators, factor models, expressing views, and
+  techniques from robust statistics.
+* The main drawbacks of sample estimates are estimation error and the curse of
+  dimensionality. As an example for a portfolio of 20 assets, 210 elements must
+  be estimated for the sample covariance matrix. Using a factor model with 3
+  factors requires 86 elements to be estimated for the covariance matrix. Risks
+  of estimation error increase as the dimension of assets and parameters to
+  estimate increases.
+* Estimating moments using shrinkage estimators, factor models, views are
+  methods to address the disadvantages of using sample estimates. I am not
+  making a claim that one method is better than another. The method chosen
+  depends on your own situation and information/data available.
 
 </div>
 
@@ -485,7 +477,7 @@ Simulated data
 ## Example: U.S. Equity Sector ETF Portfolio
 
 Consider a long only U.S. Equity portfolio allocation problem. 
-Goal is to outperform the S&P 500 (SPY as a proxy)
+Goal is to outperform the S&P 500 (SPY as a proxy).
 
 Data
 
@@ -760,7 +752,7 @@ legend('topleft', legend = c('constrained', 'unconstrained'),
 * Plans for continued development
     * Interface to $parma$
     * Additional solvers
-    * "Gallery" of examples
+    * Gallery of examples
 
 #### Acknowledgements
 
@@ -768,20 +760,19 @@ legend('topleft', legend = c('constrained', 'unconstrained'),
 * GSoC Mentors: Brian Peterson, Peter Carl, Doug Martin, and Guy Yollin
 * R/Finance Committee
 
-<div class="notes">-
-Hammer home the point of modular architecture and ability to "plug" custom
-moments and objective functions to define your own optimization problems
-- One of the best things about GSoC is the opportunity to work and interact
-with the mentors.
-- Thank the GSoC mentors for offering help and guidance during the GSoC project
-and after as I continued to work on the PortfolioAnalytics package.
-- R/Finance Committee for the conference and the opportunity to talk about
-PortfolioAnalytics.
-- Google for funding the Google Summer of Code for PortfolioAnalytics and many
-other proposals for R
-
-Thank everyone for attending
-I hope they learned something and are motivated to use PortfolioAnalytics
+<div class="notes">
+* Hammer home the point of modular architecture and ability to "plug" custom
+  moments and objective functions to define your own optimization problems
+* One of the best things about GSoC is the opportunity to work and interact
+  with the mentors.
+* Thank the GSoC mentors for offering help and guidance during the GSoC project
+  and after as I continued to work on the PortfolioAnalytics package.
+* R/Finance Committee for the conference and the opportunity to talk about
+  PortfolioAnalytics.
+* Google for funding the Google Summer of Code for PortfolioAnalytics and many
+  other proposals for R.
+* Thank everyone for attending. I hope they learned something and are motivated
+  to use PortfolioAnalytics.
 </div>
 
 
